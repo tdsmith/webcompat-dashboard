@@ -77,20 +77,12 @@ def load_issues(dbfile):
 
 
 def fetch_bugzilla_webcompat_bugs():
-    resolutions = [
-        "---", "FIXED", "INVALID", "WONTFIX", "INACTIVE", "DUPLICATE",
-        "WORKSFORME", "INCOMPLETE", "SUPPORT", "EXPIRED", "MOVED"]
-    statuses = [
-        "UNCONFIRMED", "NEW", "ASSIGNED", "REOPENED",
-        "RESOLVED", "VERIFIED", "CLOSED"]
     bugs = requests.get(
         "https://bugzilla.mozilla.org/rest/bug",
         params={
             "o1": "regexp",
             "v1": ".*webcompat.*",
             "f1": "see_also",
-            "resolution": resolutions,
-            "bug_status": statuses,
             "limit": 0,
             "include_fields": [
                 "id",
