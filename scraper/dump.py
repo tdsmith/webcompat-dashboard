@@ -97,7 +97,7 @@ def fetch_bugzilla_webcompat_bugs():
                 "see_also"]
         }).json()["bugs"]
 
-    return pd.DataFrame(bugs).set_index("id")
+    return bugs
 
 
 def dump(cache, output):
@@ -134,8 +134,10 @@ def dump(cache, output):
         [:10]
         .to_dict())
 
-    bz = fetch_bugzilla_webcompat_bugs()
+    bugzilla_see_also = fetch_bugzilla_webcompat_bugs()
+    bz = pd.DataFrame(bugzilla_see_also).set_index("id")
 
+    # Make a mapping of bugzilla ID <-see also-> webcompat bugs
     join_table_rows = []
     for key, urls in bz["see_also"].items():
         for url in urls:
