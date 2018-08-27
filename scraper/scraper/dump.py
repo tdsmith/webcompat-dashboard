@@ -1,60 +1,19 @@
 from collections import Counter
 import datetime as dt
 import json
-import os
 import re
-import sqlite3
 import sys
-import warnings
 
 import click
 import github3
 import pandas as pd
 import requests
 
-
-def update_issues(cache, github_token):
-    gh = github3.login(token=github_token)
-    if not os.path.exists(cache):
-        warnings.warn("Creating database %s" % cache)
-    db = sqlite3.connect(cache)
-    with db:
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS issues (
-                number INTEGER PRIMARY KEY,
-                updated TEXT,
-                content TEXT
-            )
-            """)
-
-    last_updated = db.execute("SELECT max(updated) FROM issues").fetchone()
-    last_updated = last_updated[0] if last_updated else None
-
-    issue_iter = gh.issues_on("webcompat", "web-bugs", state="all", since=last_updated)
-    with db:
-        for issue in issue_iter:
-            db.execute("INSERT OR REPLACE INTO issues VALUES (?, ?, ?)",
-                       (issue.number,
-                        issue.updated_at.isoformat(),
-                        issue.as_json()))
+from .cache import GithubCache
 
 
-def load_issues(dbfile):
-    db = sqlite3.connect(dbfile)
-    db.row_factory = sqlite3.Row
-    db.text_factory = bytes
-
-    sql = """
-        SELECT
-            number,
-            json_extract(content, "$.created_at") AS created_at,
-            json_extract(content, "$.closed_at") AS closed_at,
-            json_extract(content, "$.state") AS state,
-            json_extract(content, "$.body") AS body
-        FROM issues
-        """
-    issues = db.execute(sql).fetchall()
-
+def load_issues(cache):
+    issues = cache.issues()
     rows = []
     for i in issues:
         match = re.search(b"(\\*\\*)?URL(\\*\\*)?:\\s+([^\r\n]+)\r?\n", i["body"])
@@ -211,9 +170,6 @@ def dump(cache, output):
 @click.argument("cache", required=False)
 @click.argument("output", required=False)
 def cli(refresh, verbose, github_token, cache, output):
-    cache = cache or "issues.db"
-    output = output or "webcompat.json"
-
     if not github_token:
         try:
             with open(".token", "r") as f:
@@ -223,10 +179,14 @@ def cli(refresh, verbose, github_token, cache, output):
                        "or set GITHUB_TOKEN.", err=True)
             sys.exit(1)
 
+    github_session = github3.login(token=github_token)
+    cache = GithubCache(cache or "issues.db", github_session)
+    output = output or "webcompat.json"
+
     if refresh:
         if verbose:
             click.echo("Updating issue cache...")
-        update_issues(cache, github_token)
+        cache.update()
 
     if verbose:
         click.echo("Summarizing bugs...")
