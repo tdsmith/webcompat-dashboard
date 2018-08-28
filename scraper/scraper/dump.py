@@ -110,7 +110,10 @@ def dump(cache, output):
                 "bugzilla_id": key,
                 "webcompat_id": webcompat_id,
             })
-    join_table = pd.DataFrame(join_table_rows).drop_duplicates()
+    join_table = (
+        pd.DataFrame(join_table_rows, columns=["bugzilla_id", "webcompat_id"])
+        .drop_duplicates()
+    )
 
     wc_dupes = (
         join_table
