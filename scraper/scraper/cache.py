@@ -25,7 +25,7 @@ class GithubCache:
 
     def update(self) -> None:
         last_updated = self.db.execute("SELECT max(updated) FROM issues").fetchone()
-        last_updated = last_updated[0] if last_updated else None
+        last_updated = last_updated[0].decode("ascii") if last_updated else None
 
         issue_iter = self.gh.issues_on("webcompat", "web-bugs", state="all", since=last_updated)
         with self.db:
