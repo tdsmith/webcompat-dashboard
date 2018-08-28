@@ -10,6 +10,7 @@ setup(
     install_requires=[
         "attrs",
         "click",
+        "dateutil",
         "github3.py",
         "pandas",
         "requests",

@@ -23,6 +23,8 @@ class BugzillaRow:
     resolution: str = attr.ib(default="")
     see_also: List[str] = attr.ib(factory=list)
     whiteboard: str = attr.ib(default="")
+    keywords: List[str] = attr.ib(factory=list)
+    cf_last_resolved: Optional[str] = attr.ib(default=None)
 
     @classmethod
     def dupe_of(cls, webcompat_numbers, **kwargs):
@@ -52,6 +54,14 @@ def generate_bugzilla():
     ]
     bugs = [attr.asdict(row) for row in rows]
     return {"bugs": bugs}
+
+
+def generate_platform_rel():
+    rows = [
+        BugzillaRow(),
+        BugzillaRow(whiteboard="[platform-rel-google]")
+    ]
+    return {"bugs": [attr.asdict(row) for row in rows]}
 
 
 def generate_webcompat():
