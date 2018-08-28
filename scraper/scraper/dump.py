@@ -59,7 +59,7 @@ def fetch_bugzilla_webcompat_bugs():
     return bugs
 
 
-def dump(cache, output):
+def dump(cache):
     df = load_issues(cache)
 
     result = {
@@ -162,8 +162,7 @@ def dump(cache, output):
         .reset_index()
         .to_dict(orient="records"))
 
-    with open(output, "w") as f:
-        json.dump(result, f)
+    return result
 
 
 @click.command()
@@ -193,7 +192,9 @@ def cli(refresh, verbose, github_token, cache, output):
 
     if verbose:
         click.echo("Summarizing bugs...")
-    dump(cache, output)
+    body = dump(cache)
+    with open(output, "w") as f:
+        json.dump(body, f)
 
 
 if __name__ == "__main__":
