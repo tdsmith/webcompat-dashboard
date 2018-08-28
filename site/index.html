@@ -121,6 +121,92 @@
       });
     </script>
 
+    <div id="partners">
+      <div class="row"><h2>platform-rel bugs</h2></div>
+      <div class="partner_rel" style="display: none">
+        <h3 class="partner_name"></h3>
+        <div class="row">
+          <div class="col-sm">
+            <div class="plot bug-history">
+            </div>
+          </div>
+          <div class="col-sm">
+            <table class="table bug-summary">
+              <tr>
+                <th scope="row">Open bugs</th>
+                <td class="n_open">n</td>
+              </tr>
+              <tr>
+                <th scope="row">sitewait bugs</th>
+                <td class="n_sitewait">n</td>
+              </tr>
+              <tr>
+                <th scope="row">regressions</th>
+                <td class="n_regressions">n</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <table class="table buglist">
+              <thead>
+                <tr><th scope="col">Bug ID</th><th scope="col">Summary</th></tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      plotters.push(function(data) {
+        top_sites = [
+          "google.com","youtube.com","facebook.com","baidu.com","wikipedia.org","yahoo.com",
+          "reddit.com","qq.com","taobao.com","amazon.com","twitter.com","instagram.com",
+          "tmall.com","sohu.com","live.com","vk.com","jd.com","sina.com.cn","weibo.com",
+          "yandex.ru"];
+        var partners = document.getElementById("partners");
+        var template = partners.querySelector(".partner_rel");
+        console.log(Object.keys(data.by_partner));
+        for (var partner of top_sites) {
+          if(!(partner in data.by_partner)) {
+            continue;
+          }
+          var clone = template.cloneNode(true);
+          var heading = clone.querySelector(".partner_name");
+          var partner_name = document.createTextNode(partner);
+          heading.appendChild(partner_name);
+
+          Plotly.plot(
+            clone.querySelector(".bug-history"),
+            [{x: data.dates_x, y: data.by_partner[partner].summary.open_bugs_y}]
+          );
+
+          summary = data.by_partner[partner].summary;
+          clone.querySelector(".n_open").textContent = summary.n_open;
+          clone.querySelector(".n_sitewait").textContent = summary.n_sitewait;
+          clone.querySelector(".n_regressions").textContent = summary.n_regression;
+
+          buglist = clone.querySelector("table.buglist");
+          for (var bug of data.by_partner[partner].bugs.slice(1, 5)) {
+            var row = buglist.insertRow(-1);
+            for (var label of ["id", "summary"]) {
+              var cell = row.insertCell(-1);
+              cell.textContent = bug[label]
+            }
+          }
+
+          clone.style.display = "inherit";
+          partners.appendChild(clone);
+        }
+      })
+    </script>
+
     <div class="row">
       <p>Last updated: <span id="last_updated"></span></p>
     </div>
