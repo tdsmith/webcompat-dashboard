@@ -1,12 +1,13 @@
 import os
 import sqlite3
+from typing import List
 import warnings
 
 from github3 import GitHub
 
 
 class GithubCache:
-    def __init__(self, path: str, github_session: GitHub):
+    def __init__(self, path: str, github_session: GitHub) -> None:
         self.gh = github_session
         if not os.path.exists(path):
             warnings.warn("Creating database %s" % path)
@@ -22,7 +23,7 @@ class GithubCache:
         self.db.row_factory = sqlite3.Row
         self.db.text_factory = bytes
 
-    def update(self):
+    def update(self) -> None:
         last_updated = self.db.execute("SELECT max(updated) FROM issues").fetchone()
         last_updated = last_updated[0] if last_updated else None
 
@@ -34,7 +35,7 @@ class GithubCache:
                                  issue.updated_at.isoformat(),
                                  issue.as_json()))
 
-    def issues(self):
+    def issues(self) -> List[sqlite3.Row]:
         sql = """
             SELECT
                 number,
