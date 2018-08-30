@@ -193,7 +193,7 @@
           clone.querySelector(".n_regressions").textContent = summary.n_regression;
 
           buglist = clone.querySelector("table.buglist");
-          for (var bug of data.by_partner[partner].bugs.slice(1, 5)) {
+          for (var bug of data.by_partner[partner].bugs.slice(0, 5)) {
             var row = buglist.insertRow(-1);
             for (var label of ["id", "summary"]) {
               var cell = row.insertCell(-1);
