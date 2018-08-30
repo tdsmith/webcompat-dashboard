@@ -224,7 +224,7 @@ def dump(cache):
     retain_keys = ["id", "summary", "resolution"]
     subset = {}
     for partner, bugs in by_partner.items():
-        partner_bugs = []
+        regression_bugs = []
         open_bugs = [0] * len(dates_x)
         n_open = 0
         n_sitewait = 0
@@ -235,9 +235,10 @@ def dump(cache):
             reverse=True)
         for bug in bugs:
             if bug["resolution"] == "":
-                partner_bugs.append({k: bug[k] for k in retain_keys})
                 n_open += 1
-                n_regression += 1 if "regression" in bug["keywords"] else 0
+                if "regression" in bug["keywords"]:
+                    regression_bugs.append({k: bug[k] for k in retain_keys})
+                    n_regression += 1
                 n_sitewait += 1 if "sitewait" in bug["whiteboard"].lower() else 0
             created = dateutil.parser.parse(bug["creation_time"]).date()
             if bug["cf_last_resolved"]:
@@ -254,7 +255,7 @@ def dump(cache):
                 "n_regression": n_regression,
                 "open_bugs_y": open_bugs,
             },
-            "bugs": partner_bugs,
+            "regression_bugs": regression_bugs,
         }
         subset[partner] = d
     result["by_partner"] = subset

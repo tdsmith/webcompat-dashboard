@@ -110,7 +110,7 @@
             var text = document.createTextNode(value[label]);
             if(label == "bugzilla_id") {
               var link = document.createElement("a");
-              link.href = `https://bugzilla.mozilla.org/show_bug.cgi?id=${value.bugzilla_id}`
+              link.href = `https://bugzilla.mozilla.org/show_bug.cgi?id=${value.bugzilla_id}`;
               link.appendChild(text);
               cell.appendChild(link);
             } else {
@@ -148,9 +148,10 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="row buglist" style="display: none;">
           <div class="col">
-            <table class="table buglist">
+            <h4>Bugs tagged "regression"</h4>
+            <table class="table">
               <thead>
                 <tr><th scope="col">Bug ID</th><th scope="col">Summary</th></tr>
               </thead>
@@ -178,9 +179,7 @@
             continue;
           }
           var clone = template.cloneNode(true);
-          var heading = clone.querySelector(".partner_name");
-          var partner_name = document.createTextNode(partner);
-          heading.appendChild(partner_name);
+          clone.querySelector(".partner_name").textContent = partner;
 
           Plotly.plot(
             clone.querySelector(".bug-history"),
@@ -192,13 +191,21 @@
           clone.querySelector(".n_sitewait").textContent = summary.n_sitewait;
           clone.querySelector(".n_regressions").textContent = summary.n_regression;
 
-          buglist = clone.querySelector("table.buglist");
-          for (var bug of data.by_partner[partner].bugs.slice(0, 5)) {
+          if(data.by_partner[partner].regression_bugs.length > 0) {
+            clone.querySelector("div.buglist").style.display = "inherit";
+          }
+          buglist = clone.querySelector(".buglist table");
+          for (var bug of data.by_partner[partner].regression_bugs) {
             var row = buglist.insertRow(-1);
-            for (var label of ["id", "summary"]) {
-              var cell = row.insertCell(-1);
-              cell.textContent = bug[label]
-            }
+
+            var cell = row.insertCell(-1);
+            var link = document.createElement("a");
+            link.href = `https://bugzilla.mozilla.org/show_bug.cgi?id=${bug.id}`;
+            link.textContent = bug.id;
+            cell.appendChild(link);
+
+            var cell = row.insertCell(-1);
+            cell.textContent = bug.summary;
           }
 
           clone.style.display = "inherit";
