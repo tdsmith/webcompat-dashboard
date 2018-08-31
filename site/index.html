@@ -134,15 +134,15 @@
             <table class="table bug-summary">
               <tr>
                 <th scope="row">Open bugs</th>
-                <td class="n_open">n</td>
+                <td class="n_open"></td>
               </tr>
               <tr>
                 <th scope="row">sitewait bugs</th>
-                <td class="n_sitewait">n</td>
+                <td class="n_sitewait"></td>
               </tr>
               <tr>
                 <th scope="row">regressions</th>
-                <td class="n_regressions">n</td>
+                <td class="n_regressions"></td>
               </tr>
             </table>
           </div>
@@ -187,9 +187,23 @@
           );
 
           summary = data.by_partner[partner].summary;
-          clone.querySelector(".n_open").textContent = summary.n_open;
-          clone.querySelector(".n_sitewait").textContent = summary.n_sitewait;
-          clone.querySelector(".n_regressions").textContent = summary.n_regression;
+          n_open = clone.querySelector(".n_open");
+          n_open_link = document.createElement("a");
+          n_open_link.href = summary.open_url;
+          n_open_link.textContent = summary.n_open;
+          n_open.appendChild(n_open_link);
+
+          n_sitewait = clone.querySelector(".n_sitewait");
+          n_sitewait_link = document.createElement("a");
+          n_sitewait_link.href = summary.open_url;
+          n_sitewait_link.textContent = summary.n_sitewait;
+          n_sitewait.appendChild(n_sitewait_link);
+
+          n_regression = clone.querySelector(".n_regressions");
+          n_regression_link = document.createElement("a");
+          n_regression_link.href = summary.open_url;
+          n_regression_link.textContent = summary.n_regression;
+          n_regression.appendChild(n_regression_link);
 
           if(data.by_partner[partner].regression_bugs.length > 0) {
             clone.querySelector("div.buglist").style.display = "inherit";

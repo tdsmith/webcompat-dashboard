@@ -5,6 +5,7 @@ import json
 import re
 import sys
 from typing import List
+from urllib.parse import urlencode
 
 import attr
 import click
@@ -73,6 +74,8 @@ def fetch_bugzilla_partner_rel_bugs():
 
 @attr.s
 class PlatformRelSpec:
+    _SEARCH_URL = "https://bugzilla.mozilla.org/buglist.cgi"
+
     include: List[str] = attr.ib(factory=list)
     exclude: List[str] = attr.ib(factory=list)
 
@@ -81,6 +84,54 @@ class PlatformRelSpec:
 
     def prefixed_exclude(self):
         yield from ("platform-rel-{}".format(tag) for tag in self.exclude)
+
+    def sitewait_query_url(self):
+        clauses = {
+            "f1": "status_whiteboard",
+            "o1": "substring",
+            "v1": "[sitewait]",
+        }
+        clauses.update(self._bugzilla_clauses(2))
+        return self._SEARCH_URL + "?" + urlencode(clauses)
+
+    def regression_query_url(self):
+        clauses = {
+            "keywords": "regression",
+            "keywords_type": "allwords",
+        }
+        clauses.update(self._bugzilla_clauses(1))
+        return self._SEARCH_URL + "?" + urlencode(clauses)
+
+    def open_query_url(self):
+        return self._SEARCH_URL + "?" + urlencode(self._bugzilla_clauses(1))
+
+    def _bugzilla_clauses(self, field_start):
+        field = field_start
+        clauses = {
+            "resolution": "---",
+            "query_format": "advanced",
+            "f%d" % field: "OP",
+            "j%d" % field: "OR",
+        }
+        field += 1
+        for tag in self.prefixed_include():
+            clauses["f%d" % field] = "status_whiteboard"
+            clauses["o%d" % field] = "substring"
+            clauses["v%d" % field] = "[%s]" % tag
+            field += 1
+        clauses["f%d" % field] = "CP"
+        field += 1
+        if len(self.exclude) == 0:
+            return clauses
+        clauses["f%d" % field] = "OP"
+        clauses["n%d" % field] = 1
+        field += 1
+        for tag in self.prefixed_exclude():
+            clauses["f%d" % field] = "status_whiteboard"
+            clauses["o%d" % field] = "substring"
+            clauses["v%d" % field] = "[%s]" % tag
+            field += 1
+        return clauses
 
 
 SITE_TO_TAGS = {
@@ -260,8 +311,11 @@ def dump(cache):
         d = {
             "summary": {
                 "n_open": n_open,
+                "open_url": SITE_TO_TAGS[partner].open_query_url(),
                 "n_sitewait": n_sitewait,
+                "sitewait_url": SITE_TO_TAGS[partner].sitewait_query_url(),
                 "n_regression": n_regression,
+                "regression_url": SITE_TO_TAGS[partner].regression_query_url(),
                 "open_bugs_y": open_bugs,
             },
             "regression_bugs": regression_bugs,
