@@ -16,6 +16,12 @@
   </style>
   <script type="text/javascript" src="js/plotly-latest.min.js" defer></script>
   <script type="text/javascript">
+    function zip(arrays) {
+        return arrays[0].map(function(_,i){
+            return arrays.map(function(array){return array[i]})
+        });
+    }
+
     // Load and plot by-domain stats
     var plotters = [];  // Registered later in the page
     document.addEventListener("DOMContentLoaded", function(event) {
@@ -46,11 +52,11 @@
         <div id="domains_open" class="plot"></div>
         <script type="text/javascript">
           plotters.push(function(data) {
-            var y = Object.keys(data.open);
-            var x = Object.values(data.open);
+            var zipped = zip([Object.keys(data.open), Object.values(data.open)]);
+            data = zip(zipped.sort(function(a, b) { return b[1] - a[1]; }));
             Plotly.plot(
               "domains_open",
-              [{x, y, type: 'bar', orientation: 'h'}],
+              [{x: data[1], y: data[0], type: 'bar', orientation: 'h'}],
               {
                 margin: { t: 0, l: 150 },
                 yaxis: { autorange: "reversed" },
@@ -64,11 +70,11 @@
         <div id="domains_30days" class="plot"></div>
         <script type="text/javascript">
           plotters.push(function(data) {
-            var y = Object.keys(data.last30);
-            var x = Object.values(data.last30);
+            var zipped = zip([Object.keys(data.last30), Object.values(data.last30)]);
+            data = zip(zipped.sort(function(a, b) { return b[1] - a[1]; }));
             Plotly.plot(
               "domains_30days",
-              [{x, y, type: 'bar', orientation: 'h'}],
+              [{x: data[1], y: data[0], type: 'bar', orientation: 'h'}],
               {
                 margin: { t: 0, l: 150 },
                 yaxis: { autorange: "reversed" },

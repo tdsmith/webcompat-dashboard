@@ -2,6 +2,7 @@ from collections import Counter
 import datetime as dt
 from dateutil.rrule import rrule, DAILY
 import json
+import os
 import re
 import sys
 from typing import List
@@ -15,6 +16,10 @@ import pandas as pd
 import requests
 
 from .cache import GithubCache
+
+
+with open(os.path.join(os.path.dirname(__file__), "world_ranks.json")) as f:
+    world_ranks = json.load(f)
 
 
 def load_issues(cache):
@@ -171,6 +176,18 @@ def sort_partner_rel_bugs(bugs):
     return by_partner
 
 
+def annotate_rankings(d):
+    to_rename = []
+    for key in d:
+        for site in world_ranks:
+            if key == site or key.endswith(f".{site}"):
+                to_rename.append((key, site))
+                break
+    for key, site in to_rename:
+        d[f"{key} {world_ranks[site]}"] = d.pop(key)
+    return d
+
+
 def dump(cache):
     df = load_issues(cache)
 
@@ -190,6 +207,7 @@ def dump(cache):
         .sort_values(ascending=False)
         [:10]
         .to_dict())
+    result["open"] = annotate_rankings(result["open"])
 
     # Top domains, last 30 days
     result["last30"] = (
@@ -204,6 +222,7 @@ def dump(cache):
         .sort_values(ascending=False)
         [:10]
         .to_dict())
+    result["last30"] = annotate_rankings(result["last30"])
 
     bugzilla_see_also = fetch_bugzilla_webcompat_bugs()
     bz = pd.DataFrame(bugzilla_see_also).set_index("id")
