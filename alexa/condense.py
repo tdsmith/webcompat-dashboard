@@ -10,6 +10,16 @@ flags = {
     "russia": "🇷🇺",
 }
 
+internet_users = {
+    "global": 3000,
+    "china": 721,
+    "usa": 287,
+    "russia": 102,
+    "france": 56,
+    "germany": 71,
+
+}
+
 NS = {"ats": "http://ats.amazonaws.com/doc/2005-07-11"}
 
 ranks = {}
@@ -21,7 +31,7 @@ for country in flags:
         domain = site.find("ats:DataUrl", NS).text
         rank = site.find("ats:Country/ats:Rank", NS).text
         reach = site.find("ats:Country/ats:Reach/ats:PerMillion", NS).text
-        ranks.setdefault(domain, {})[country] = (int(rank), float(reach))
+        ranks.setdefault(domain, {})[country] = (int(rank), float(reach)*internet_users[country])
 
 condensed = {}
 for domain in ranks:
