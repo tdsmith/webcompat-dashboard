@@ -274,7 +274,16 @@ def dump(cache):
 
     def most_common(col):
         c = Counter(col)
-        return ", ".join("%s (%d)" % (x, n) for x, n in c.most_common(3))
+        result = []
+        for key, n in c.most_common(3):
+            if not isinstance(key, str):
+                continue
+            for site in world_ranks:
+                if key == site or key.endswith(f".{site}"):
+                    key = f"{key} {world_ranks[site]}"
+                    break
+            result.append(f"{key} ({n})")
+        return ", ".join(result)
 
     domains_per_bz_issue = (
         wc_dupes
