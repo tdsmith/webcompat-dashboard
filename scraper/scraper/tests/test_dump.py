@@ -44,3 +44,15 @@ class TestDump:
         assert "old.example" not in result["last30"].keys()
         assert "recent.example" in result["open"].keys()
         assert "old.example" in result["open"].keys()
+
+    def test_sort_partner_rel_bugs(self):
+        bugs = [
+            {"id": 1, "whiteboard": "[platform-rel-google] [platform-rel-youtube]"},
+            {"id": 2, "whiteboard": ""},
+            {"id": 3, "whiteboard": "[platform-rel-Facebook]"}
+        ]
+        sorted = dump.sort_partner_rel_bugs(bugs)
+        assert "youtube.com" in sorted.keys()
+        assert "google.com" not in sorted.keys()
+        assert "facebook.com" in sorted.keys()
+        assert len(sorted.keys()) == 2
