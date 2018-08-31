@@ -1,10 +1,12 @@
-from collections import Counter, OrderedDict
+from collections import Counter
 import datetime as dt
 from dateutil.rrule import rrule, DAILY
 import json
 import re
 import sys
+from typing import List
 
+import attr
 import click
 import dateutil
 import github3
@@ -69,45 +71,52 @@ def fetch_bugzilla_partner_rel_bugs():
         }).json()["bugs"]
 
 
+@attr.s
+class PlatformRelSpec:
+    include: List[str] = attr.ib(factory=list)
+    exclude: List[str] = attr.ib(factory=list)
+
+    def prefixed_include(self):
+        yield from ("platform-rel-{}".format(tag) for tag in self.include)
+
+    def prefixed_exclude(self):
+        yield from ("platform-rel-{}".format(tag) for tag in self.exclude)
+
+
+SITE_TO_TAGS = {
+    "youtube.com": PlatformRelSpec(["youtube"]),
+    "baidu.com": PlatformRelSpec(["baidu"]),
+    "wikipedia.org": PlatformRelSpec(["wikipedia", "wikimedia"]),
+    "yahoo.com": PlatformRelSpec(["yahoo!"]),
+    "reddit.com": PlatformRelSpec(["reddit"]),
+    "amazon.com": PlatformRelSpec(["amazon", "amazonmusic", "amazonshopping", "amazonvideo"]),
+    "twitter.com": PlatformRelSpec(["twitter"]),
+    "live.com": PlatformRelSpec(["microsoft"]),
+    "yandex.ru": PlatformRelSpec(["yandex"]),
+    "google.com": PlatformRelSpec(
+        include=[
+            "google", "googlecalendar", "googledocs", "googlehangouts", "googlemaps",
+            "googlesheets", "googleslides", "googlesuite",
+        ],
+        exclude=["youtube"],
+    ),
+    "whatsapp.com": PlatformRelSpec(["whatsappweb"]),
+    "facebook.com": PlatformRelSpec(
+        include=["facebook"],
+        exclude=["whatsappweb", "instagram"],
+    )
+}
+
+
 def sort_partner_rel_bugs(bugs):
-    site_to_tags = OrderedDict([
-        ("youtube.com", ["platform-rel-youtube"]),
-        ("baidu.com", ["platform-rel-baidu"]),
-        ("wikipedia.org", [
-            "platform-rel-wikipedia",
-            "platform-rel-wikimedia",
-        ]),
-        ("yahoo.com", ["platform-rel-yahoo!"]),
-        ("reddit.com", ["platform-rel-reddit"]),
-        ("amazon.com", [
-            "platform-rel-amazon",
-            "platform-rel-amazonmusic",
-            "platform-rel-amazonshopping",
-            "platform-rel-amazonvideo"]),
-        ("twitter.com", ["platform-rel-twitter"]),
-        ("live.com", ["platform-rel-microsoft"]),
-        ("yandex.ru", ["platform-rel-yandex"]),
-        ("google.com", [
-            "platform-rel-google",
-            "platform-rel-googlecalendar",
-            "platform-rel-googledocs",
-            "platform-rel-googlehangouts",
-            "platform-rel-googlemaps",
-            "platform-rel-googlesheets",
-            "platform-rel-googleslides",
-            "platform-rel-googlesuite",
-        ]),
-        ("whatsapp.com", ["platform-rel-whatsappweb"]),
-        ("facebook.com", ["platform-rel-facebook"]),
-    ])
     by_partner = {}
     for bug in bugs:
-        for partner, keys in site_to_tags.items():
-            tags = re.findall(r"\[([^\]]+)\]", bug["whiteboard"].lower())
-            for key in keys:
-                if key in tags:
-                    by_partner.setdefault(partner, []).append(bug)
-                    break
+        tags = re.findall(r"\[([^\]]+)\]", bug["whiteboard"].lower())
+        for partner, spec in SITE_TO_TAGS.items():
+            if any(tag in spec.prefixed_exclude() for tag in tags):
+                continue
+            if any(tag in spec.prefixed_include() for tag in tags):
+                by_partner.setdefault(partner, []).append(bug)
     return by_partner
 
 
