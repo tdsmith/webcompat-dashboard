@@ -189,7 +189,8 @@
 
           Plotly.plot(
             clone.querySelector(".bug-history"),
-            [{x: data.dates_x, y: data.by_partner[partner].summary.open_bugs_y}]
+            [{x: data.dates_x, y: data.by_partner[partner].summary.open_bugs_y}],
+            {width: 540, height: 250, margin: {t: 10}}
           );
 
           summary = data.by_partner[partner].summary;
